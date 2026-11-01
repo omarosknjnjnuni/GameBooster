@@ -1,0 +1,46 @@
+
+name: Build Game Booster Pro APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Extract project
+        run: |
+          mkdir source
+          unzip -q GameBoosterPro.zip -d source
+          PROJECT=$(find source -name settings.gradle.kts -printf '%h\n' | head -n 1)
+          echo "PROJECT_DIR=$PROJECT" >> $GITHUB_ENV
+          test -n "$PROJECT"
+
+      - name: Build APK
+        run: |
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameBoosterPro-APK
+          path: '**/build/outputs/apk/debug/*.apk'
+          
